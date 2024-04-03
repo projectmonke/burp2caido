@@ -8,9 +8,9 @@ The tool takes two command-line arguments.
 - `--caido` specifies where the Caido project folder is.
 
 1. Open Burpsuite, and select your project. Navigate to the Proxy tab, and highlight the requests you want to export, right click and select "Save Items". Name your XML file something memorable and save it, and remember the path.
-2. Create a new, empty Caido project. Navigate to the **Workspace** tab and click the three dots to the right, and select "Copy Path".
+2. Create a new, empty Caido project. Navigate to the **Workspace** tab and click the three dots to the right, and select "Copy Path". **Now, visit HTTP History AND visit Search. You MUST initialise these tabs first for a new project, or it will delete your import.**
 3. Run the following command, replacing the placeholders with the two paths above: `burp2caido --burp <burpsuite path> --caido <caido path>`
-4. If you reopen your Caido project, you should see the traffic in the HTTP History tab in Caido.
+4. If you switch out of your new Caido project and switch back to it, you should see the traffic in the HTTP History tab in Caido.
 
 # Warning
 This tool inserts HTTP data directly into the Caido project. Running it multiple times WILL add the requests again each time. Run it once!
