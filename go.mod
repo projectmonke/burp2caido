@@ -1,4 +1,4 @@
-module burp2caido
+module github.com/projectmonke/burp2caido
 
 go 1.21.5
 
