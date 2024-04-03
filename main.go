@@ -55,14 +55,28 @@ func main() {
 `, "1.0")
   fmt.Println(banner)
 
-  burpsuite := flag.String("burp", "./", "Path to Burpsuite XML file")
-  caido := flag.String("caido", "./", "Path to Caido project path")
+  burpsuite := flag.String("burp", "", "Path to Burpsuite XML file")
+  caido := flag.String("caido", "", "Path to Caido project path")
   flag.Parse()
   
+  if *burpsuite == "" {
+    log.Fatalf("The --burp flag is required.")
+    os.Exit(1)
+  }
+
+  if *caido == "" {
+    log.Fatalf("The --caido flag is required.")
+    os.Exit(1)
+  }
+
   fmt.Println("[INFO] Using Caido path: " + *caido)
   fmt.Println("[INFO] Using Burpsuite path: " + *burpsuite)
 
   db_main_path := *caido + "/database.caido"
+  if _, err := os.Stat(db_main_path); os.IsNotExist(err) {
+	  log.Fatal("Caido main database does not exist.")
+  }
+
 	dbCaido, err := sql.Open("sqlite3", db_main_path)
 	if err != nil {
 		log.Fatalf("Error opening database.caido: %v", err)
@@ -70,6 +84,10 @@ func main() {
 	defer dbCaido.Close()
   
   db_raw_path := *caido + "/database_raw.caido"
+  if _, err := os.Stat(db_raw_path); os.IsNotExist(err) {
+	  log.Fatal("Caido raw database does not exist.")
+  }
+
 	dbCaidoRaw, err := sql.Open("sqlite3", db_raw_path)
 	if err != nil {
 		log.Fatalf("Error opening database_raw.caido: %v", err)
