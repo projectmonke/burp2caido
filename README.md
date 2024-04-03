@@ -16,4 +16,4 @@ The tool takes two command-line arguments.
 This tool inserts HTTP data directly into the Caido project. Running it multiple times WILL add the requests again each time. Run it once!
 
 # Disclaimer
-If something is broken, fork it yourself and fix it. I'm usually pretty busy. I do intend on expanding the capabilities of this tool, but I'm making no promises about when that'll happen.
+If something is broken, fork it yourself and fix it. I'm usually pretty busy. I do intend on expanding the capabilities of this tool, but I'm making no promises about when that'll happen. However, feel free to open issues and I'll try to answer them.
