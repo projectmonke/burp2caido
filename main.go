@@ -16,8 +16,8 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/xml"
-  "flag"
-  "fmt"
+	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -44,8 +44,8 @@ type Item struct {
 }
 
 func main() {
-  
-  var banner = fmt.Sprintf(`
+
+	var banner = fmt.Sprintf(`
 ██████╗ ██╗   ██╗██████╗ ██████╗ ██████╗  ██████╗ █████╗ ██╗██████╗  ██████╗ 
 ██╔══██╗██║   ██║██╔══██╗██╔══██╗╚════██╗██╔════╝██╔══██╗██║██╔══██╗██╔═══██╗
 ██████╔╝██║   ██║██████╔╝██████╔╝ █████╔╝██║     ███████║██║██║  ██║██║   ██║
@@ -53,40 +53,40 @@ func main() {
 ██████╔╝╚██████╔╝██║  ██║██║     ███████╗╚██████╗██║  ██║██║██████╔╝╚██████╔╝ by monke v%s
 ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═════╝  ╚═════╝                                                                       
 `, "1.0")
-  fmt.Println(banner)
+	fmt.Println(banner)
 
-  burpsuite := flag.String("burp", "", "Path to Burpsuite XML file")
-  caido := flag.String("caido", "", "Path to Caido project path")
-  flag.Parse()
-  
-  if *burpsuite == "" {
-    log.Fatalf("The --burp flag is required.")
-    os.Exit(1)
-  }
+	burpsuite := flag.String("burp", "", "Path to Burpsuite XML file")
+	caido := flag.String("caido", "", "Path to Caido project path")
+	flag.Parse()
 
-  if *caido == "" {
-    log.Fatalf("The --caido flag is required.")
-    os.Exit(1)
-  }
+	if *burpsuite == "" {
+		log.Fatalf("The --burp flag is required.")
+		os.Exit(1)
+	}
 
-  fmt.Println("[INFO] Using Caido path: " + *caido)
-  fmt.Println("[INFO] Using Burpsuite path: " + *burpsuite)
+	if *caido == "" {
+		log.Fatalf("The --caido flag is required.")
+		os.Exit(1)
+	}
 
-  db_main_path := *caido + "/database.caido"
-  if _, err := os.Stat(db_main_path); os.IsNotExist(err) {
-	  log.Fatal("Caido main database does not exist.")
-  }
+	fmt.Println("[INFO] Using Caido path: " + *caido)
+	fmt.Println("[INFO] Using Burpsuite path: " + *burpsuite)
+
+	db_main_path := *caido + "/database.caido"
+	if _, err := os.Stat(db_main_path); os.IsNotExist(err) {
+		log.Fatal("Caido main database does not exist.")
+	}
 
 	dbCaido, err := sql.Open("sqlite3", db_main_path)
 	if err != nil {
 		log.Fatalf("Error opening database.caido: %v", err)
 	}
 	defer dbCaido.Close()
-  
-  db_raw_path := *caido + "/database_raw.caido"
-  if _, err := os.Stat(db_raw_path); os.IsNotExist(err) {
-	  log.Fatal("Caido raw database does not exist.")
-  }
+
+	db_raw_path := *caido + "/database_raw.caido"
+	if _, err := os.Stat(db_raw_path); os.IsNotExist(err) {
+		log.Fatal("Caido raw database does not exist.")
+	}
 
 	dbCaidoRaw, err := sql.Open("sqlite3", db_raw_path)
 	if err != nil {
@@ -113,7 +113,7 @@ func main() {
 			}
 		}
 	}
-  fmt.Println("\033[32m[INFO] Updated Caido databases successfully.\033[0m")
+	fmt.Println("\033[32m[INFO] Updated Caido databases successfully.\033[0m")
 }
 
 func insertData(dbCaido, dbCaidoRaw *sql.DB, item Item) {
@@ -128,6 +128,7 @@ func insertData(dbCaido, dbCaidoRaw *sql.DB, item Item) {
 	}
 	timestamp := parsedTime.UnixNano() / int64(time.Millisecond)
 
+	// database_raw.caido
 	txRaw, err := dbCaidoRaw.Begin()
 	if err != nil {
 		log.Fatal(err)
@@ -156,6 +157,7 @@ func insertData(dbCaido, dbCaidoRaw *sql.DB, item Item) {
 	}
 	txRaw.Commit()
 
+	// database.caido
 	tx, err := dbCaido.Begin()
 	if err != nil {
 		log.Fatal(err)
@@ -167,20 +169,37 @@ func insertData(dbCaido, dbCaidoRaw *sql.DB, item Item) {
 		tx.Rollback()
 		log.Fatal(err)
 	}
+
 	responseID, err := res.LastInsertId()
 	if err != nil {
 		tx.Rollback()
 		log.Fatal(err)
 	}
 
-	_, err = tx.Exec("INSERT INTO requests (host, method, path, length, port, is_tls, raw_id, query, response_id, source, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'intercept', ?)",
-		item.Host, item.Method, item.Path, len(requestData), item.Port, item.Protocol == "https", rawRequestID, "", responseID, timestamp)
+	requestID, err := res.LastInsertId()
 	if err != nil {
 		tx.Rollback()
 		log.Fatal(err)
 	}
-  
-  intercept_id, err := res.LastInsertId()
+	_, err = tx.Exec("INSERT INTO requests_metadata (id) VALUES (?)", requestID)
+	if err != nil {
+		txRaw.Rollback()
+		log.Fatal(err)
+	}
+
+	_, err = tx.Exec("INSERT INTO requests (host, method, path, length, port, is_tls, raw_id, query, response_id, source, created_at, metadata_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'intercept', ?, ?)",
+		item.Host, item.Method, item.Path, len(requestData), item.Port, item.Protocol == "https", rawRequestID, "", responseID, timestamp, rawRequestID)
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err)
+	}
+
+	intercept_id, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		log.Fatal(err)
+	}
+
 	_, err = tx.Exec("INSERT INTO intercept_entries (id, request_id) VALUES (?, ?)",
 		intercept_id, intercept_id)
 	if err != nil {
@@ -190,4 +209,3 @@ func insertData(dbCaido, dbCaidoRaw *sql.DB, item Item) {
 
 	tx.Commit()
 }
-
