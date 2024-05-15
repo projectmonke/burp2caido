@@ -1,7 +1,7 @@
 package main
 
 /*
-BurpToCaido v1.0 by monke
+BurpToCaido v1.1 by monke
 ---
 This is a utility to convert HTTP history from Burpsuite to Caido.
 Burpsuite HTTP history is exported in XML format. This is formatted and
